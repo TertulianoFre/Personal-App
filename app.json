@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "CN Personal",
+    "slug": "personal-trainer-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#131313",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#131313",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#131313"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O CN Personal usa suas fotos para registrar sua evolução física.",
+          "cameraPermission": "O CN Personal usa a câmera para registrar fotos da sua evolução física."
+        }
+      ]
+    ]
+  }
+}
