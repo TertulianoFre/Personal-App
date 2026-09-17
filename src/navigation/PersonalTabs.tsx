@@ -11,6 +11,10 @@ import VerEvolucaoScreen from '../screens/personal/VerEvolucaoScreen';
 import ExerciciosLibraryScreen from '../screens/personal/ExerciciosLibraryScreen';
 import ExercicioFormScreen from '../screens/personal/ExercicioFormScreen';
 import PersonalProfileScreen from '../screens/personal/PersonalProfileScreen';
+import ConversasListScreen from '../screens/personal/ConversasListScreen';
+import ChatComAlunoScreen from '../screens/personal/ChatComAlunoScreen';
+import PlanosAlimentaresScreen from '../screens/personal/PlanosAlimentaresScreen';
+import PrescreverPlanoAlimentarScreen from '../screens/personal/PrescreverPlanoAlimentarScreen';
 import { colors } from '../theme/theme';
 import { stackHeaderOptions } from './RootNavigator';
 
@@ -20,6 +24,8 @@ export type PersonalAlunosStackParamList = {
   PrescreverTreino: { alunoId: string; alunoNome: string; treinoId?: string };
   VerAnamnese: { alunoId: string; alunoNome: string };
   VerEvolucao: { alunoId: string; alunoNome: string };
+  PlanosAlimentares: { alunoId: string; alunoNome: string };
+  PrescreverPlanoAlimentar: { alunoId: string; alunoNome: string; planoId?: string };
 };
 
 export type PersonalExerciciosStackParamList = {
@@ -27,8 +33,14 @@ export type PersonalExerciciosStackParamList = {
   ExercicioForm: { exercicioId?: string };
 };
 
+export type PersonalMensagensStackParamList = {
+  ConversasList: undefined;
+  Chat: { alunoId: string; alunoNome: string };
+};
+
 const AlunosStack = createNativeStackNavigator<PersonalAlunosStackParamList>();
 const ExerciciosStack = createNativeStackNavigator<PersonalExerciciosStackParamList>();
+const MensagensStack = createNativeStackNavigator<PersonalMensagensStackParamList>();
 const Tab = createBottomTabNavigator();
 
 function AlunosStackNavigator() {
@@ -55,7 +67,30 @@ function AlunosStackNavigator() {
         component={VerEvolucaoScreen}
         options={{ title: 'Evolução' }}
       />
+      <AlunosStack.Screen
+        name="PlanosAlimentares"
+        component={PlanosAlimentaresScreen}
+        options={{ title: 'Planos Alimentares' }}
+      />
+      <AlunosStack.Screen
+        name="PrescreverPlanoAlimentar"
+        component={PrescreverPlanoAlimentarScreen}
+        options={{ title: 'Plano Alimentar' }}
+      />
     </AlunosStack.Navigator>
+  );
+}
+
+function MensagensStackNavigator() {
+  return (
+    <MensagensStack.Navigator screenOptions={{ ...stackHeaderOptions, headerTitleAlign: 'center' }}>
+      <MensagensStack.Screen name="ConversasList" component={ConversasListScreen} options={{ title: 'Mensagens' }} />
+      <MensagensStack.Screen
+        name="Chat"
+        component={ChatComAlunoScreen}
+        options={({ route }) => ({ title: route.params.alunoNome })}
+      />
+    </MensagensStack.Navigator>
   );
 }
 
@@ -108,6 +143,14 @@ export default function PersonalTabs() {
         options={{
           title: 'Exercícios',
           tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="dumbbell" color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="MensagensTab"
+        component={MensagensStackNavigator}
+        options={{
+          title: 'Mensagens',
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="chat-outline" color={color} size={size} />,
         }}
       />
       <Tab.Screen

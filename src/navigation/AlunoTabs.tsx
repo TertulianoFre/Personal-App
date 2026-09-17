@@ -10,6 +10,9 @@ import AlunoProfileScreen from '../screens/aluno/AlunoProfileScreen';
 import AnamneseScreen from '../screens/aluno/AnamneseScreen';
 import MinhaEvolucaoScreen from '../screens/aluno/MinhaEvolucaoScreen';
 import NovaAvaliacaoScreen from '../screens/aluno/NovaAvaliacaoScreen';
+import MensagensScreen from '../screens/aluno/MensagensScreen';
+import MeusPlanosScreen from '../screens/aluno/MeusPlanosScreen';
+import PlanoDetailScreen from '../screens/aluno/PlanoDetailScreen';
 import { colors } from '../theme/theme';
 import { stackHeaderOptions } from './RootNavigator';
 
@@ -17,6 +20,11 @@ export type AlunoTreinosStackParamList = {
   MeusTreinos: undefined;
   TreinoDetail: { treinoId: string; treinoNome: string };
   ExecutarTreino: { treinoId: string; treinoNome: string };
+};
+
+export type AlunoDietaStackParamList = {
+  MeusPlanos: undefined;
+  PlanoDetail: { planoId: string; planoNome: string };
 };
 
 export type AlunoPerfilStackParamList = {
@@ -27,6 +35,7 @@ export type AlunoPerfilStackParamList = {
 };
 
 const TreinosStack = createNativeStackNavigator<AlunoTreinosStackParamList>();
+const DietaStack = createNativeStackNavigator<AlunoDietaStackParamList>();
 const PerfilStack = createNativeStackNavigator<AlunoPerfilStackParamList>();
 const Tab = createBottomTabNavigator();
 
@@ -45,6 +54,19 @@ function TreinosStackNavigator() {
         options={({ route }) => ({ title: route.params.treinoNome, gestureEnabled: false })}
       />
     </TreinosStack.Navigator>
+  );
+}
+
+function DietaStackNavigator() {
+  return (
+    <DietaStack.Navigator screenOptions={{ ...stackHeaderOptions, headerTitleAlign: 'center' }}>
+      <DietaStack.Screen name="MeusPlanos" component={MeusPlanosScreen} options={{ title: 'Minha Dieta' }} />
+      <DietaStack.Screen
+        name="PlanoDetail"
+        component={PlanoDetailScreen}
+        options={({ route }) => ({ title: route.params.planoNome })}
+      />
+    </DietaStack.Navigator>
   );
 }
 
@@ -91,6 +113,22 @@ export default function AlunoTabs() {
         options={{
           title: 'Treinos',
           tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="dumbbell" color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="DietaTab"
+        component={DietaStackNavigator}
+        options={{
+          title: 'Dieta',
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="food-apple-outline" color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="MensagensTab"
+        component={MensagensScreen}
+        options={{
+          title: 'Mensagens',
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="chat-outline" color={color} size={size} />,
         }}
       />
       <Tab.Screen

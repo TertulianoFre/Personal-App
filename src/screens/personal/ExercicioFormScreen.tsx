@@ -12,8 +12,10 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { GRUPOS_MUSCULARES } from '../../types/database';
 import type { PersonalExerciciosStackParamList } from '../../navigation/PersonalTabs';
-import { colors, typography, spacing, shared } from '../../theme/theme';
+import { colors, typography, spacing, radii, shared } from '../../theme/theme';
+import ExercicioVideoModal from '../../components/ExercicioVideoModal';
 
 type Props = NativeStackScreenProps<PersonalExerciciosStackParamList, 'ExercicioForm'>;
 
@@ -21,11 +23,14 @@ export default function ExercicioFormScreen({ route, navigation }: Props) {
   const { exercicioId } = route.params;
   const { profile } = useAuth();
   const [nome, setNome] = useState('');
-  const [grupoMuscular, setGrupoMuscular] = useState('');
+  const [principal, setPrincipal] = useState<string | null>(null);
+  const [secundarios, setSecundarios] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [donoId, setDonoId] = useState<string | null | undefined>(undefined); // undefined = exercício novo
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(!!exercicioId);
+  const [previewVisible, setPreviewVisible] = useState(false);
 
   useEffect(() => {
     if (!exercicioId) return;
@@ -33,13 +38,24 @@ export default function ExercicioFormScreen({ route, navigation }: Props) {
       const { data, error } = await supabase.from('exercicios').select('*').eq('id', exercicioId).single();
       if (!error && data) {
         setNome(data.nome);
-        setGrupoMuscular(data.grupo_muscular ?? '');
+        setPrincipal(data.grupamento_principal);
+        setSecundarios(data.grupamentos_secundarios ?? []);
         setVideoUrl(data.video_url ?? '');
         setDescricao(data.descricao ?? '');
+        setDonoId(data.personal_id);
       }
       setLoadingData(false);
     })();
   }, [exercicioId]);
+
+  function toggleSecundario(grupo: string) {
+    setSecundarios((prev) => (prev.includes(grupo) ? prev.filter((g) => g !== grupo) : [...prev, grupo]));
+  }
+
+  function escolherPrincipal(grupo: string) {
+    setPrincipal((prev) => (prev === grupo ? null : grupo));
+    setSecundarios((prev) => prev.filter((g) => g !== grupo));
+  }
 
   async function handleSave() {
     if (!nome) {
@@ -50,7 +66,8 @@ export default function ExercicioFormScreen({ route, navigation }: Props) {
 
     const payload = {
       nome,
-      grupo_muscular: grupoMuscular || null,
+      grupamento_principal: principal,
+      grupamentos_secundarios: secundarios,
       video_url: videoUrl || null,
       descricao: descricao || null,
     };
@@ -95,8 +112,17 @@ export default function ExercicioFormScreen({ route, navigation }: Props) {
     );
   }
 
+  const ehBiblioteca = donoId === null;
+  const podeRemover = !!exercicioId && donoId === profile?.id;
+
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      {ehBiblioteca && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>Exercício da biblioteca base (compartilhado com todos os personals)</Text>
+        </View>
+      )}
+
       <Text style={shared.inputLabel}>Nome do exercício</Text>
       <TextInput
         style={shared.input}
@@ -106,16 +132,33 @@ export default function ExercicioFormScreen({ route, navigation }: Props) {
         placeholder="Ex: Supino reto"
       />
 
-      <Text style={[shared.inputLabel, { marginTop: spacing.md }]}>Grupo muscular</Text>
-      <TextInput
-        style={shared.input}
-        placeholderTextColor={colors.outline}
-        value={grupoMuscular}
-        onChangeText={setGrupoMuscular}
-        placeholder="Ex: Peito"
-      />
+      <Text style={[shared.inputLabel, styles.spacedLabel]}>Grupamento principal (volume direto)</Text>
+      <View style={styles.chipsWrap}>
+        {GRUPOS_MUSCULARES.map((g) => (
+          <TouchableOpacity
+            key={g}
+            style={[styles.chip, principal === g && styles.chipActive]}
+            onPress={() => escolherPrincipal(g)}
+          >
+            <Text style={[styles.chipText, principal === g && styles.chipTextActive]}>{g}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-      <Text style={[shared.inputLabel, { marginTop: spacing.md }]}>Link do vídeo (YouTube, Vimeo, etc.)</Text>
+      <Text style={[shared.inputLabel, styles.spacedLabel]}>Grupamentos secundários (volume indireto)</Text>
+      <View style={styles.chipsWrap}>
+        {GRUPOS_MUSCULARES.filter((g) => g !== principal).map((g) => (
+          <TouchableOpacity
+            key={g}
+            style={[styles.chip, secundarios.includes(g) && styles.chipActiveSecundario]}
+            onPress={() => toggleSecundario(g)}
+          >
+            <Text style={[styles.chipText, secundarios.includes(g) && styles.chipTextActive]}>{g}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text style={[shared.inputLabel, styles.spacedLabel]}>Link do vídeo (YouTube)</Text>
       <TextInput
         style={shared.input}
         placeholderTextColor={colors.outline}
@@ -124,8 +167,13 @@ export default function ExercicioFormScreen({ route, navigation }: Props) {
         placeholder="https://youtu.be/..."
         autoCapitalize="none"
       />
+      {!!videoUrl && (
+        <TouchableOpacity style={styles.previewButton} onPress={() => setPreviewVisible(true)}>
+          <Text style={styles.previewButtonText}>▶ Pré-visualizar vídeo</Text>
+        </TouchableOpacity>
+      )}
 
-      <Text style={[shared.inputLabel, { marginTop: spacing.md }]}>Observações / execução</Text>
+      <Text style={[shared.inputLabel, styles.spacedLabel]}>Observações / execução</Text>
       <TextInput
         style={[shared.input, styles.textArea]}
         placeholderTextColor={colors.outline}
@@ -139,11 +187,18 @@ export default function ExercicioFormScreen({ route, navigation }: Props) {
         {loading ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={shared.primaryButtonText}>Salvar</Text>}
       </TouchableOpacity>
 
-      {exercicioId && (
+      {podeRemover && (
         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
           <Text style={styles.deleteButtonText}>Remover exercício</Text>
         </TouchableOpacity>
       )}
+
+      <ExercicioVideoModal
+        visible={previewVisible}
+        videoUrl={videoUrl}
+        exercicioNome={nome || 'Pré-visualização'}
+        onClose={() => setPreviewVisible(false)}
+      />
     </ScrollView>
   );
 }
@@ -151,6 +206,28 @@ export default function ExercicioFormScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { padding: spacing.lg, paddingBottom: 60 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  spacedLabel: { marginTop: spacing.md },
+  badge: {
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: radii.md,
+    padding: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  badgeText: { ...typography.labelSm, color: colors.primary, textTransform: 'none' },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+  },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipActiveSecundario: { backgroundColor: colors.surfaceContainerHigh, borderColor: colors.primary },
+  chipText: { ...typography.labelSm, color: colors.onSurfaceVariant, textTransform: 'none' },
+  chipTextActive: { color: colors.onPrimary, fontFamily: 'Inter_600SemiBold' },
+  previewButton: { marginTop: spacing.sm, alignSelf: 'flex-start' },
+  previewButtonText: { ...typography.labelMd, color: colors.primary },
   textArea: { minHeight: 90, textAlignVertical: 'top', paddingTop: 14 },
   deleteButton: { alignItems: 'center', marginTop: spacing.md },
   deleteButtonText: { ...typography.labelMd, color: colors.error },

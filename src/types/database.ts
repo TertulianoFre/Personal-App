@@ -17,13 +17,48 @@ export interface Profile {
 
 export interface Exercicio {
   id: string;
-  personal_id: string;
+  // null = exercício da biblioteca base (compartilhada entre todos os personals);
+  // preenchido = exercício próprio, criado por aquele personal.
+  personal_id: string | null;
   nome: string;
-  grupo_muscular: string | null;
+  grupamento_principal: string | null;
+  grupamentos_secundarios: string[];
   video_url: string | null;
   descricao: string | null;
   created_at: string;
 }
+
+export interface Alimento {
+  id: string;
+  nome: string;
+  kcal_100g: number;
+  proteina_g: number;
+  carboidratos_g: number;
+  gorduras_g: number;
+  created_at: string;
+}
+
+// Grupamentos musculares (volume direto/indireto), na ordem usada na planilha de referência.
+export const GRUPOS_MUSCULARES = [
+  'Quadríceps',
+  'Posterior de coxa',
+  'Glúteo máximo',
+  'Glúteo médio',
+  'Adutor',
+  'Panturrilha',
+  'Abdômen',
+  'Latíssimo',
+  'Upper back',
+  'Eretores',
+  'Peitoral',
+  'Deltoide anterior',
+  'Deltoide lateral',
+  'Deltoide posterior',
+  'Bíceps',
+  'Tríceps',
+  'Trapézio',
+  'Antebraço',
+];
 
 export interface Treino {
   id: string;
@@ -83,6 +118,45 @@ export interface AvaliacaoFisica {
   medida_coxa_cm: number | null;
   fotos: string[];
   observacoes: string | null;
+  created_at: string;
+}
+
+export interface PlanoAlimentar {
+  id: string;
+  aluno_id: string;
+  personal_id: string;
+  nome: string;
+  observacoes: string | null;
+  ativo: boolean;
+  created_at: string;
+}
+
+export interface Refeicao {
+  id: string;
+  plano_id: string;
+  nome: string;
+  horario: string | null;
+  ordem: number;
+  created_at: string;
+}
+
+export interface RefeicaoAlimento {
+  id: string;
+  refeicao_id: string;
+  alimento_id: string;
+  quantidade_g: number;
+  observacoes: string | null;
+  ordem: number;
+  // Preenchido quando fazemos join com alimentos
+  alimento?: Alimento;
+}
+
+export interface Mensagem {
+  id: string;
+  aluno_id: string;
+  remetente_id: string;
+  conteudo: string;
+  lida: boolean;
   created_at: string;
 }
 

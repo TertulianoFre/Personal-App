@@ -47,6 +47,12 @@ export default function AlunoDetailScreen({ route, navigation }: Props) {
         >
           <Text style={shared.secondaryButtonText}>Evolução</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.secondaryAction}
+          onPress={() => navigation.navigate('PlanosAlimentares', { alunoId, alunoNome })}
+        >
+          <Text style={shared.secondaryButtonText}>Dieta</Text>
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -42,8 +42,19 @@ export default function PrescreverTreinoScreen({ route, navigation }: Props) {
   const [itens, setItens] = useState<ItemTreino[]>([]);
 
   const [biblioteca, setBiblioteca] = useState<Exercicio[]>([]);
+  const [buscaExercicio, setBuscaExercicio] = useState('');
   const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const bibliotecaFiltrada = useMemo(() => {
+    if (!buscaExercicio.trim()) return biblioteca.slice(0, 30);
+    const termo = buscaExercicio.trim().toLowerCase();
+    return biblioteca.filter(
+      (ex) =>
+        ex.nome.toLowerCase().includes(termo) ||
+        (ex.grupamento_principal ?? '').toLowerCase().includes(termo)
+    );
+  }, [biblioteca, buscaExercicio]);
 
   useEffect(() => {
     (async () => {
@@ -52,7 +63,7 @@ export default function PrescreverTreinoScreen({ route, navigation }: Props) {
       const { data: exerciciosData } = await supabase
         .from('exercicios')
         .select('*')
-        .eq('personal_id', profile.id)
+        .or(`personal_id.eq.${profile.id},personal_id.is.null`)
         .order('nome');
       setBiblioteca((exerciciosData as Exercicio[]) ?? []);
 
@@ -285,18 +296,31 @@ export default function PrescreverTreinoScreen({ route, navigation }: Props) {
       ))}
 
       <Text style={styles.sectionTitle}>Adicionar da biblioteca</Text>
-      {biblioteca.length === 0 && (
+      {biblioteca.length === 0 ? (
         <Text style={styles.emptyText}>
-          Você ainda não cadastrou exercícios. Vá na aba Exercícios para criar sua biblioteca.
+          Nenhum exercício disponível ainda. Vá na aba Exercícios para cadastrar.
         </Text>
+      ) : (
+        <>
+          <TextInput
+            style={[shared.input, { marginBottom: spacing.sm }]}
+            placeholder="Buscar exercício por nome ou grupo muscular..."
+            placeholderTextColor={colors.outline}
+            value={buscaExercicio}
+            onChangeText={setBuscaExercicio}
+          />
+          <View style={styles.bibliotecaWrap}>
+            {bibliotecaFiltrada.map((ex) => (
+              <TouchableOpacity key={ex.id} style={styles.bibliotecaChip} onPress={() => addExercicio(ex)}>
+                <Text style={styles.bibliotecaChipText}>+ {ex.nome}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {!buscaExercicio && biblioteca.length > 30 && (
+            <Text style={styles.emptyText}>Mostrando 30 de {biblioteca.length} — use a busca para ver mais.</Text>
+          )}
+        </>
       )}
-      <View style={styles.bibliotecaWrap}>
-        {biblioteca.map((ex) => (
-          <TouchableOpacity key={ex.id} style={styles.bibliotecaChip} onPress={() => addExercicio(ex)}>
-            <Text style={styles.bibliotecaChipText}>+ {ex.nome}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
 
       <TouchableOpacity style={[shared.primaryButton, { marginTop: spacing.xl }]} onPress={handleSave} disabled={saving}>
         {saving ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={shared.primaryButtonText}>Salvar treino</Text>}

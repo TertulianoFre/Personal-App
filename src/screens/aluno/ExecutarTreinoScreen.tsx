@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import type { TreinoExercicio } from '../../types/database';
 import type { AlunoTreinosStackParamList } from '../../navigation/AlunoTabs';
 import { colors, typography, spacing, radii, shared } from '../../theme/theme';
+import ExercicioVideoModal from '../../components/ExercicioVideoModal';
 
 type Props = NativeStackScreenProps<AlunoTreinosStackParamList, 'ExecutarTreino'>;
 
@@ -41,6 +42,7 @@ export default function ExecutarTreinoScreen({ route, navigation }: Props) {
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [dificuldade, setDificuldade] = useState(3);
   const [comentario, setComentario] = useState('');
+  const [videoAtivo, setVideoAtivo] = useState<TreinoExercicio | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -188,6 +190,11 @@ export default function ExecutarTreinoScreen({ route, navigation }: Props) {
               <Text style={styles.exNome}>
                 {index + 1}. {state.item.exercicio?.nome}
               </Text>
+              {!!state.item.exercicio?.video_url && (
+                <TouchableOpacity onPress={() => setVideoAtivo(state.item)} hitSlop={8}>
+                  <MaterialCommunityIcons name="play-circle" size={24} color={colors.primary} />
+                </TouchableOpacity>
+              )}
             </TouchableOpacity>
 
             <View style={styles.metaRow}>
@@ -285,6 +292,13 @@ export default function ExecutarTreinoScreen({ route, navigation }: Props) {
           </View>
         </View>
       </Modal>
+
+      <ExercicioVideoModal
+        visible={!!videoAtivo}
+        videoUrl={videoAtivo?.exercicio?.video_url}
+        exercicioNome={videoAtivo?.exercicio?.nome ?? ''}
+        onClose={() => setVideoAtivo(null)}
+      />
     </View>
   );
 }
